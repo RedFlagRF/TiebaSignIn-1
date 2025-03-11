@@ -232,7 +232,7 @@ public class Run {
             LOGGER.error("server酱发送失败 -- " + e);
         }
     } 
-*
+
       /**
      * 发送运行结果到微信，通过 PUSHPLUS
      *
