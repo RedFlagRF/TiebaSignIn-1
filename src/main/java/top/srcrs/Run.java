@@ -212,11 +212,11 @@ public class Run {
      */
     public void send(String sckey) {
 
-        String text = "总: " + followNum + " - ";
-        text += "成功: " + success.size() + " 失败: " + (followNum - success.size());
+//        String text = "总: " + followNum + " - ";
+//        text += "成功: " + success.size() + " 失败: " + (followNum - success.size());
         String desp = "共 " + followNum + " 贴吧\n\n";
         desp += "成功: " + success.size() + " 失败: " + (followNum - success.size());
-        String body = "msg=" + text + "\nTiebaSignIn运行结果\n\n" + desp;
+        String body = "msg=贴吧签到运行结果\n\n" + desp;
         StringEntity entityBody = new StringEntity(body, "UTF-8");
         HttpClient client = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost("https://qmsg.zendee.cn/send/" + sckey);
