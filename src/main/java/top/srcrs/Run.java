@@ -14,11 +14,7 @@ import org.slf4j.LoggerFactory;
 import top.srcrs.domain.Cookie;
 import top.srcrs.util.Encryption;
 import top.srcrs.util.Request;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -84,7 +80,9 @@ public class Run {
         cookie.setBDUSS(args[0]);
         Run run = new Run();
         run.getTbs();
+        randomSleep();
         run.getFollow();
+        randomSleep();
         run.runSign();
         LOGGER.info("共 {} 个贴吧 - 成功: {} - 失败: {} - {} ", followNum, success.size(), followNum - success.size(), failed);
         LOGGER.info("失效 {} 个贴吧: {} ", invalid.size(), invalid);
@@ -168,9 +166,7 @@ public class Run {
                     String body = "kw=" + s + "&tbs=" + tbs + "&sign=" + Encryption.enCodeMd5("kw=" + rotation + "tbs=" + tbs + "tiebaclient!!!");
                     JSONObject post = new JSONObject();
                     post = Request.post(SIGN_URL, body);
-                    int randomTime = new Random().nextInt(200) + 300;
-                    LOGGER.info("等待 {} 毫秒", randomTime);
-                    TimeUnit.MILLISECONDS.sleep(randomTime);
+                    randomSleep();
                     if ("0".equals(post.getString("error_code"))) {
                         iterator.remove();
                         success.add(rotation);
@@ -197,51 +193,67 @@ public class Run {
         }
     }
 
+    private static void randomSleep()  {
+        int randomTime = new Random().nextInt(200) + 300;
+        LOGGER.info("等待 {} 毫秒", randomTime);
+        try {
+            TimeUnit.MILLISECONDS.sleep(randomTime);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
-     * 发送运行结果到微信，通过 server 酱
+     * 发送运行结果到微信，通过 Qmsg 酱
      *
      * @param sckey
      * @author srcrs
      * @Time 2020-10-31
      */
-       public void send(String sckey) {
-       
+    public void send(String sckey) {
+
         String text = "总: " + followNum + " - ";
         text += "成功: " + success.size() + " 失败: " + (followNum - success.size());
         String desp = "共 " + followNum + " 贴吧\n\n";
         desp += "成功: " + success.size() + " 失败: " + (followNum - success.size());
-        String body = "text=" + text + "&desp=" + "TiebaSignIn运行结果\n\n" + desp;
+        String body = "msg=" + text + "\nTiebaSignIn运行结果\n\n" + desp;
         StringEntity entityBody = new StringEntity(body, "UTF-8");
         HttpClient client = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost("https://qmsg.zendee.cn/send/" + sckey );
+        HttpPost httpPost = new HttpPost("https://qmsg.zendee.cn/send/" + sckey);
         httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
         httpPost.setEntity(entityBody);
-        HttpResponse resp = null;
-        String respContent = null;
+        HttpResponse resp;
+        String respContent;
         try {
             resp = client.execute(httpPost);
-            HttpEntity entity = null;
+            HttpEntity entity;
             if (resp.getStatusLine().getStatusCode() < 400) {
                 entity = resp.getEntity();
             } else {
                 entity = resp.getEntity();
             }
             respContent = EntityUtils.toString(entity, "UTF-8");
-            LOGGER.info("server酱推送正常");
+            JSONObject result = JSONObject.parseObject(respContent);
+            if (Boolean.TRUE.equals(result.getBoolean("success"))) {
+                LOGGER.info("Qmsg酱推送正常");
+            } else {
+                LOGGER.info("Qmsg酱接口响应正常，返回结果不成功：{}", result.getString("reason"));
+            }
         } catch (Exception e) {
-            LOGGER.error("server酱发送失败 -- " + e);
+            LOGGER.error("Qmsg酱发送失败 -- ", e);
         }
-    } 
+    }
 
-      /**
+
+    /**
      * 发送运行结果到微信，通过 PUSHPLUS
      *
      * @param sckey
      * @author srcrs
      * @Time 2020-10-31
      */
-/*     public void send(String sckey) {
-        *//** 将要推送的数据 *//*
+    /*     public void send(String sckey) {
+     *//** 将要推送的数据 *//*
         String text = "总: " + followNum + " - ";
         text += "成功: " + success.size() + " 失败: " + (followNum - success.size());
         String desp = "共 " + followNum + " 贴吧\n\n";
