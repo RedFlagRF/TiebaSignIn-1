@@ -130,11 +130,11 @@ public class Run {
                     // 将为签到的贴吧加入到 follow 中，待签到
                     follow.add(tiebaName.replace("+", "%2B"));
                     // 过滤失效的贴吧
-                    if (Request.isTiebaNotExist(tiebaName)) {
+                 /*   if (Request.isTiebaNotExist(tiebaName)) {
                         follow.remove(tiebaName);
                         invalid.add(tiebaName);
                         failed.add(tiebaName);
-                    }
+                    }*/
                 } else {
                     // 将已经成功签到的贴吧，加入到 success
                     success.add(tiebaName);
@@ -194,7 +194,7 @@ public class Run {
     }
 
     private static void randomSleep()  {
-        int randomTime = new Random().nextInt(200) + 300;
+        int randomTime = new Random().nextInt(1000) + 300+ new Random().nextInt(1000);
         LOGGER.info("等待 {} 毫秒", randomTime);
         try {
             TimeUnit.MILLISECONDS.sleep(randomTime);
