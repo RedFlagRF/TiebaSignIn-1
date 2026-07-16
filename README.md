@@ -65,13 +65,26 @@ BDUSS | xxxxxxxxxxx
 
 每天早上`6:30`将会自动进行签到
 
-## 添加PushPlus酱推送
+## 添加推送通知
 
-需在Secrets中添加PushPlus的`SCKEY`，格式如下
+需在 Secrets 中配置推送密钥，可同时配置多个通道。
+
+### Qmsg 酱（QQ/微信推送）
 
 Name | Value
 -|-
 SCKEY | xxxxxxxxxx
+
+### BotTalk 企业微信推送（支持 Markdown）
+
+Name | Value
+-|-
+PUSH_BOTTALK_KEY | xxxxxxxxxx
+
+### 通道控制
+
+通过 Variables 配置 `PUSH_ENABLED_CHANNELS` 控制实际启用的推送通道，逗号分隔（如 `qmsg,botTalk`）。
+未设置时默认仅启用 Qmsg 酱。
 
 ## 2020-11-01
 

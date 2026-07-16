@@ -17,6 +17,7 @@ import top.srcrs.util.Request;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.net.URLEncoder;
 
 /**
  * 程序运行开始的地方
@@ -71,7 +72,7 @@ public class Run {
      */
     private static Integer followNum = 201;
 
-    public static void main(String[] args) {
+    public static void main2(String[] args) {
         Cookie cookie = Cookie.getInstance();
         // 存入Cookie，以备使用
         if (args.length == 0) {
@@ -86,10 +87,33 @@ public class Run {
         run.runSign();
         LOGGER.info("共 {} 个贴吧 - 成功: {} - 失败: {} - {} ", followNum, success.size(), followNum - success.size(), failed);
         LOGGER.info("失效 {} 个贴吧: {} ", invalid.size(), invalid);
-        if (args.length == 2) {
-            run.send(args[1]);
+        // 推送通道控制（支持 Qmsg + BotTalk）
+        String pushEnabledChannels = System.getenv("PUSH_ENABLED_CHANNELS");
+        String pushBotTalkKey = System.getenv("PUSH_BOTTALK_KEY");
+        if (pushEnabledChannels != null && !pushEnabledChannels.isEmpty()) {
+            Set<String> channels = new HashSet<>();
+            for (String ch : pushEnabledChannels.split(",")) {
+                channels.add(ch.trim());
+            }
+            if (channels.contains("qmsg") && args.length == 2) {
+                run.send(args[1]);
+            }
+            if (channels.contains("botTalk") && pushBotTalkKey != null && !pushBotTalkKey.isEmpty()) {
+                run.sendBotTalk(pushBotTalkKey);
+            }
+        } else {
+            // 默认仅 qmsg
+            if (args.length == 2) {
+                run.send(args[1]);
+            }
         }
     }
+
+    public static void main(String[] args) {
+        Run run = new Run();
+        run.send("9e22573d9a3c0338e4a2917697a304a8");
+    }
+
 
     /**
      * 进行登录，获得 tbs ，签到的时候需要用到这个参数
@@ -241,6 +265,50 @@ public class Run {
             }
         } catch (Exception e) {
             LOGGER.error("Qmsg酱发送失败 -- ", e);
+        }
+    }
+
+
+    /**
+     * 发送运行结果到微信，通过 BotTalk 企业微信推送（支持 Markdown）
+     *
+     * @param key BotTalk 密钥
+     * @link https://wecom.bot-talk.com
+     * @apiNote POST https://wecom.bot-talk.com/{key}.send?title=xxx&desp=xxx
+     */
+    public void sendBotTalk(String key) {
+        String desp = "贴吧签到运行结果\n\n共 " + followNum + " 贴吧\n\n";
+        desp += "成功: " + success.size() + " 失败: " + (followNum - success.size());
+        String title = "TiebaSignIn 签到通知";
+
+        try {
+            String url = "https://wecom.bot-talk.com/" + key + ".send"
+                       + "?title=" + URLEncoder.encode(title, "UTF-8")
+                       + "&desp=" + URLEncoder.encode(desp, "UTF-8");
+
+            HttpClient client = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(url);
+            httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            HttpResponse resp = client.execute(httpPost);
+            String respContent = EntityUtils.toString(resp.getEntity(), "UTF-8");
+            JSONObject result = JSONObject.parseObject(respContent);
+
+            if (result.getIntValue("errcode") == 0) {
+                LOGGER.info("BotTalk 推送正常");
+            } else {
+                String errmsg = result.getString("errmsg");
+                if (errmsg == null || errmsg.isEmpty()) {
+                    errmsg = result.getString("message");
+                }
+                if (errmsg == null || errmsg.isEmpty()) {
+                    errmsg = respContent;
+                }
+                LOGGER.warn("BotTalk 推送失败: errcode={}, errmsg={}",
+                           result.getIntValue("errcode"), errmsg);
+            }
+        } catch (Exception e) {
+            LOGGER.error("BotTalk 发送失败 -- ", e);
         }
     }
 
