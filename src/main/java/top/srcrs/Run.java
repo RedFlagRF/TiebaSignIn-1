@@ -72,7 +72,7 @@ public class Run {
      */
     private static Integer followNum = 201;
 
-    public static void main2(String[] args) {
+    public static void main(String[] args) {
         Cookie cookie = Cookie.getInstance();
         // 存入Cookie，以备使用
         if (args.length == 0) {
@@ -107,11 +107,6 @@ public class Run {
                 run.send(args[1]);
             }
         }
-    }
-
-    public static void main(String[] args) {
-        Run run = new Run();
-        run.send("9e22573d9a3c0338e4a2917697a304a8");
     }
 
 
