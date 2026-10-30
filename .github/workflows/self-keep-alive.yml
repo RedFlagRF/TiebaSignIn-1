@@ -1,6 +1,7 @@
 name: 自动续期任务
 
 on:
+  # 2026-10-30 重新注册定时触发：本仓库的 schedule 自 2026-10-14 起停止派发，改动触发块以强制 GitHub 重新解析
   schedule:
     - cron: '0 0 1,6,11,16,21,26 * *'
   workflow_dispatch:
